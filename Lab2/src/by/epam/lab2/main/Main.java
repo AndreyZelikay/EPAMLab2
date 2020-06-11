@@ -4,14 +4,15 @@ import java.util.Objects;
 
 public class Main {
 
-    public static final String SEPARATORS_REGEX = " ";
+    public static final String SEPARATORS_REGEX = "[ ,;:'.]";
+    public static final String LOOKAHEAD_SEPARATORS_REGEX = "(?=[ ,;:'.])";
 
     public static void main(String[] args) {
         String input = "aBcDdeFaBc abcdefg hijklmn aaaaaaahhhhhhhhh some string";
 
         System.out.println("1) even and odd symbols: " + getEvenCharactersAsString(input) + "\n" + getOddCharactersAsString(input));
 
-        System.out.printf("2) percentage: %f%% \n",
+        System.out.printf("2) percentage: %f%% %n",
                 (double) getNumberLowercaseLetters(input) /
                         Objects.requireNonNullElse(getNumberUppercaseLetters(input), 1) * 100);
 
@@ -138,7 +139,7 @@ public class Main {
     public static String[] getStringWordsInReverseOrder(String input) {
         String[] words = input.split(SEPARATORS_REGEX);
 
-        for (int i = 0; i < words.length; i++) {
+        for (int i = 0; i < words.length / 2; i++) {
             String temp = words[i];
             words[i] = words[words.length - i - 1];
             words[words.length - i - 1] = temp;
@@ -180,21 +181,23 @@ public class Main {
     }
 
     public static String swapWords(String input, int firstIndex, int secondIndex) {
-        String[] words = input.split(SEPARATORS_REGEX);
+        String[] wordsWithSeparators = input.split(LOOKAHEAD_SEPARATORS_REGEX);
 
-        String temp = words[firstIndex];
-        words[firstIndex] = words[secondIndex];
-        words[secondIndex] = temp;
+        String firstWord = wordsWithSeparators[firstIndex].replaceAll(SEPARATORS_REGEX, "");
+        String secondWord = wordsWithSeparators[secondIndex].replaceAll(SEPARATORS_REGEX, "");
 
-        return String.join(" ", words);
+        wordsWithSeparators[firstIndex] = wordsWithSeparators[firstIndex].replaceAll("[^ ]+?$", secondWord);
+        wordsWithSeparators[secondIndex] = wordsWithSeparators[secondIndex].replaceAll("[^ ]+?$", firstWord);
+
+        return String.join("", wordsWithSeparators);
     }
 
     public static String deleteLastWord(String input) {
-        return input.replaceAll(" [^ ]*$", "");
+        return input.replaceAll(SEPARATORS_REGEX + "[^ ]*$", "");
     }
 
     public static String addWhiteSpaces(String input) {
-        return input.replaceAll(" ", "  ");
+        return input.replace(" ", "  ");
     }
 
     public static boolean isPalindrome(String input) {
@@ -213,7 +216,7 @@ public class Main {
 
             firstTermBuilder.insert(0, "0".repeat(firstTerm.length() - firstTermBuilder.length()));
 
-            secondTerm = firstTermBuilder.toString();
+            firstTerm = firstTermBuilder.toString();
         }
 
         StringBuilder result = new StringBuilder();
@@ -233,9 +236,17 @@ public class Main {
     }
 
     public static String deleteWordsByLength(String input, int length) {
-        String regex = String.format(" ?[^ ]{%d}( |$)", length);
+        String[] words = input.split(LOOKAHEAD_SEPARATORS_REGEX);
 
-        return input.replaceAll(regex,"");
+        StringBuilder result = new StringBuilder();
+
+        for(String word: words) {
+            if(word.replaceAll(SEPARATORS_REGEX, "").length() != length) {
+                result.append(word);
+            }
+        }
+
+        return result.toString();
     }
 
     public static String deleteRedundantWhitespaces(String input) {
